@@ -2,10 +2,34 @@ from turtle import *
 
 import time
 import sys
+import os
+import json
 import numpy as np
 from svgpathtools import svg2paths
 
-paths, attributes = svg2paths('tv.svg')
+import requests
+
+if len(sys.argv) != 2:
+    print('Usage: %s nounproject_id' % (sys.argv[0]))
+    exit()
+
+TMP_FILE='/tmp/tmp.svg'
+
+import secret
+
+endpoint = 'https://thenounproject.com/icon/%s/download/' % (sys.argv[1])
+cookies={'sessionid': secret.sessionid, 'csrftoken': secret.csrftoken}
+headers={'X-CSRFToken': secret.csrftoken, 'Origin': 'https://thenounproject.com', 'Referer': 'https://thenounproject.com/'}
+response = requests.post(endpoint, cookies=cookies, headers=headers)
+response = json.loads(response.content)
+icon = requests.get(response['download'], cookies=cookies, headers=headers)
+f = open(TMP_FILE, 'w')
+f.write(icon.content)  # python will convert \n to os.linesep
+f.close()
+
+paths, attributes = svg2paths(TMP_FILE)
+
+os.remove(TMP_FILE)
 
 time.sleep(2)
 
